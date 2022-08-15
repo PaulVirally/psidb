@@ -1,7 +1,7 @@
 mod database;
 use std::collections::HashMap;
 use ron::ser::{PrettyConfig, to_string_pretty};
-use database::{Database, entry::directory::Directory};
+use database::{Database, entry::{directory::Directory, action::Action}};
 
 fn get_serde_config() -> ron::ser::PrettyConfig {
     PrettyConfig::new()
@@ -34,8 +34,9 @@ fn main() {
     let script_git_hashes = vec![Some("0000111122223333444455556666777788889999".to_owned()), None, Some("0123456789abcdef0123456789abcdef01234567".to_owned()), None];
 
     let mut db = Database::new();
-    db.add_data(dir, md).unwrap();
-    db.add_transformation(script_paths, script_args, script_git_hashes, None).unwrap();
+    let data_id = db.add_data(dir, md).unwrap();
+    let trans_id = db.add_transformation(script_paths, script_args, script_git_hashes, None).unwrap();
+    db.add_connection(Action::Apply, vec![data_id], vec![trans_id], None).unwrap();
 
     println!("{}", to_string_pretty(&db, get_serde_config()).unwrap());
 }

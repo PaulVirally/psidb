@@ -3,7 +3,7 @@ use std::error::Error;
 use std::path::Path;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
-use entry::{data::Data, transformation::Transformation, connection::Connection, directory::Directory};
+use entry::{data::Data, transformation::Transformation, connection::Connection, action::Action, directory::Directory};
 use chrono::{Utc, SecondsFormat};
 
 #[derive(Serialize, Deserialize)]
@@ -24,7 +24,7 @@ impl Database {
         }
     }
 
-    pub fn add_data(&mut self, data_dir: Directory, meta_data: Option<HashMap<String, String>>) -> Result<(), Box<dyn Error>> {
+    pub fn add_data(&mut self, data_dir: Directory, meta_data: Option<HashMap<String, String>>) -> Result<u64, Box<dyn Error>> {
         // Add the current time to the meta data if it doesn't already exisyy
         let mut md = meta_data.unwrap_or(HashMap::new());
         if !md.contains_key("time") {
@@ -39,10 +39,10 @@ impl Database {
         self.data_vec.push(data);
         self.curr_id += 1;
 
-        Ok(())
+        Ok(self.curr_id - 1)
     }
 
-    pub fn add_transformation(&mut self, script_paths: Vec<String>, script_args: Vec<Option<Vec<String>>>, script_git_hashes: Vec<Option<String>>, meta_data: Option<HashMap<String, String>>) -> Result<(), Box<dyn Error>> {
+    pub fn add_transformation(&mut self, script_paths: Vec<String>, script_args: Vec<Option<Vec<String>>>, script_git_hashes: Vec<Option<String>>, meta_data: Option<HashMap<String, String>>) -> Result<u64, Box<dyn Error>> {
         // Make sure that the script_paths, script_args, and script_git_hashes are the same length
         if script_paths.len() != script_args.len() || script_paths.len() != script_git_hashes.len() {
             return Err("script_paths, script_args, and script_git_hashes must be the same length".into());
@@ -111,6 +111,27 @@ impl Database {
         };
         self.transformation_vec.push(transformation);
         self.curr_id += 1;
-        Ok(())
+
+        Ok(self.curr_id - 1)
+    }
+
+    pub fn add_connection(&mut self, action: Action, data_ids: Vec<u64>, transformation_ids: Vec<u64>, meta_data: Option<HashMap<String, String>>) -> Result<u64, Box<dyn Error>> {
+        // Add the current time to the meta data if it doesn't already exisyy
+        let mut md = meta_data.unwrap_or(HashMap::new());
+        if !md.contains_key("time") {
+            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
+        }
+
+        let connection = Connection {
+            id: self.curr_id,
+            md: md,
+            action: action,
+            data_ids: data_ids,
+            transformation_ids: transformation_ids
+        };
+        self.connection_vec.push(connection);
+        self.curr_id += 1;
+
+        Ok(self.curr_id - 1)
     }
 }
