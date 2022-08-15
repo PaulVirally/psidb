@@ -83,16 +83,13 @@ impl Database {
                 let hash = hash.unwrap();
                 let oid = git2::Oid::from_str(hash.as_str())?;
                 let commit = repo.find_commit(oid);
-                used_hashes[i] = {
-                    if commit.is_err() {
-                        println!("Warning: Ignoring hash {} for {} because it is not a valid commit", hash, path_str);
-                        None
-                    }
-                    else {
-                        Some(hash.to_owned())
-                    }
-                };
-                continue;
+                if commit.is_err() {
+                    println!("Warning: Ignoring hash {} for {} because it is not a valid commit", hash, path_str);
+                }
+                else {
+                    used_hashes[i] = Some(hash);
+                    continue;
+                }
             }
 
             // Get the hash of the latest commit
