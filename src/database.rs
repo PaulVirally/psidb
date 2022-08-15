@@ -96,7 +96,13 @@ impl Database {
             }
 
             // Get the hash of the latest commit
-            used_hashes[i] = Some(repo.head()?.target().unwrap().to_string());
+            let target = repo.head()?.target();
+            if target.is_some() {
+                // If the repository has a head, get the hash of the latest commit
+                used_hashes[i] = Some(target.unwrap().to_string());
+                continue;
+            }
+            used_hashes[i] = None;
         }
 
         let transformation = Transformation {
