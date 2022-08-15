@@ -96,7 +96,7 @@ impl Database {
             }
 
             // Get the hash of the latest commit
-            used_hashes[i] = Some(String::from_utf8(repo.head()?.target().unwrap().as_bytes().to_vec())?);
+            used_hashes[i] = Some(repo.head()?.target().unwrap().to_string());
         }
 
         let transformation = Transformation {
