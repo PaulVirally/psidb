@@ -85,7 +85,7 @@ impl Database {
                 let commit = repo.find_commit(oid);
                 used_hashes[i] = {
                     if commit.is_err() {
-                        println!("Warning: Ignoring hash {} for {} because it is not a valid commit", path_str, hash);
+                        println!("Warning: Ignoring hash {} for {} because it is not a valid commit", hash, path_str);
                         None
                     }
                     else {
