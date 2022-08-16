@@ -3,7 +3,7 @@ use std::error::Error;
 use std::path::Path;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
-use entry::{data::Data, transformation::Transformation, connection::Connection, action::Action, directory::Directory};
+use entry::{data::Data, transformation::Transformation, connection::Connection, action::Action};
 use chrono::{Utc, SecondsFormat};
 
 #[derive(Serialize, Deserialize)]
@@ -24,7 +24,14 @@ impl Database {
         }
     }
 
-    pub fn add_data(&mut self, data_dir: Directory, meta_data: Option<HashMap<String, String>>) -> Result<u64, Box<dyn Error>> {
+    pub fn add_data(&mut self, data_paths: Vec<String>, meta_data: Option<HashMap<String, String>>) -> Result<u64, Box<dyn Error>> {
+        // Check if the paths provided are valid
+        for path in data_paths.iter() {
+            if !Path::new(path).exists() {
+                return Err(format!("Path {} does not exist", path).into());
+            }
+        }
+
         // Add the current time to the meta data if it doesn't already exisyy
         let mut md = meta_data.unwrap_or(HashMap::new());
         if !md.contains_key("time") {
@@ -34,7 +41,7 @@ impl Database {
         let data = Data {
             id: self.curr_id,
             md: md,
-            data_dir: data_dir
+            data_paths: data_paths
         };
         self.data_vec.push(data);
         self.curr_id += 1;
@@ -46,12 +53,6 @@ impl Database {
         // Make sure that the script_paths, script_args, and script_git_hashes are the same length
         if script_paths.len() != script_args.len() || script_paths.len() != script_git_hashes.len() {
             return Err("script_paths, script_args, and script_git_hashes must be the same length".into());
-        }
-
-        // Add the current time to the meta data if it doesn't already exisyy
-        let mut md = meta_data.unwrap_or(HashMap::new());
-        if !md.contains_key("time") {
-            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
         }
 
         // Get the hashes of the scripts if they are not provided (or None if they are not tracked by git)
@@ -100,6 +101,12 @@ impl Database {
                 continue;
             }
             used_hashes[i] = None;
+        }
+
+        // Add the current time to the meta data if it doesn't already exisyy
+        let mut md = meta_data.unwrap_or(HashMap::new());
+        if !md.contains_key("time") {
+            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
         }
 
         let transformation = Transformation {

@@ -1,7 +1,7 @@
 mod database;
 use std::collections::HashMap;
 use ron::ser::{PrettyConfig, to_string_pretty};
-use database::{Database, entry::{directory::Directory, action::Action}};
+use database::{Database, entry::action::Action};
 
 fn get_serde_config() -> ron::ser::PrettyConfig {
     PrettyConfig::new()
@@ -11,22 +11,7 @@ fn get_serde_config() -> ron::ser::PrettyConfig {
 }
 
 fn main() {
-    let dir = Directory {
-        fpaths: vec!["a1".to_owned(), "a2".to_owned(), "a3".to_owned()],
-        sub_dirs: vec![
-            Directory {fpaths: vec!["b1".to_owned(), "b2".to_owned()],
-            sub_dirs: vec![
-                Directory {fpaths: vec!["ba1".to_owned(), "ba2".to_owned()], sub_dirs: vec![]}
-            ]},
-            Directory {fpaths: vec![],
-            sub_dirs: vec![
-                Directory {fpaths: vec!["ca1".to_owned()],
-                sub_dirs: vec![
-                    Directory {fpaths: vec!["caa1".to_owned()],
-                    sub_dirs: vec![]}]}
-            ]}
-        ]
-    };
+    let data_paths = vec!["test_dir/data/a/a1".to_owned(), "test_dir/data/a/a2".to_owned(), "test_dir/data/a/a3".to_owned(), "test_dir/data/b/b1".to_owned(), "test_dir/data/b/b2".to_owned(), "test_dir/data/b/ba/ba1".to_owned(), "test_dir/data/b/ba/ba2".to_owned(), "test_dir/data/c/ca/caa/caa1".to_owned()];
     let md = Some(HashMap::from([("a".to_owned(), "0.123".to_owned()), ("b".to_owned(), "0.456".to_owned())]));
 
     let script_paths = vec!["test_dir/scripts/script1".to_owned(), "test_dir/scripts/script2".to_owned(), "test_dir/scripts/script3".to_owned(), "test_dir/scripts/script4".to_owned()];
@@ -34,7 +19,7 @@ fn main() {
     let script_git_hashes = vec![Some("0000111122223333444455556666777788889999".to_owned()), None, Some("0123456789abcdef0123456789abcdef01234567".to_owned()), None];
 
     let mut db = Database::new();
-    let data_id = db.add_data(dir, md).unwrap();
+    let data_id = db.add_data(data_paths, md).unwrap(); // TODO: Check if the data is a valid path
     let trans_id = db.add_transformation(script_paths, script_args, script_git_hashes, None).unwrap();
     db.add_connection(Action::Apply, vec![data_id], vec![trans_id], None).unwrap();
 
