@@ -25,9 +25,13 @@ impl Database {
     }
 
     pub fn add_data(&mut self, data_paths: Vec<String>, meta_data: Option<HashMap<String, String>>) -> Result<u64, Box<dyn Error>> {
-        // Check if the paths provided are valid
-        for path in data_paths.iter() {
-            if !Path::new(path).exists() {
+        // Check if the paths are valid and make the paths aboslute paths
+        let mut used_paths: Vec<String> = vec!["".to_owned(); data_paths.len()];
+        for (i, path) in data_paths.iter().enumerate() {
+            if Path::new(path).exists() {
+                used_paths[i] = Path::new(path).canonicalize()?.to_str().unwrap().to_owned();
+            }
+            else {
                 return Err(format!("Path {} does not exist", path).into());
             }
         }
@@ -41,7 +45,7 @@ impl Database {
         let data = Data {
             id: self.curr_id,
             md: md,
-            data_paths: data_paths
+            data_paths: used_paths
         };
         self.data_vec.push(data);
         self.curr_id += 1;
@@ -55,8 +59,9 @@ impl Database {
             return Err("script_paths, script_args, and script_git_hashes must be the same length".into());
         }
 
-        // Get the hashes of the scripts if they are not provided (or None if they are not tracked by git)
+        // Get the hashes of the scripts if they are not provided (or None if they are not tracked by git), and get the absolute paths of the scripts
         let mut used_hashes: Vec<Option<String>> = vec![None; script_paths.len()];
+        let mut used_paths: Vec<String> = vec!["".to_owned(); script_paths.len()];
         for (i, (path_str, hash)) in script_paths.iter().zip(script_git_hashes).enumerate() {
             let path = Path::new(path_str);
 
@@ -69,6 +74,9 @@ impl Database {
             if !path.is_file() {
                 return Err(format!("Script path {} is not a file", path_str).into());
             }
+
+            // Get the absolute path of the script
+            used_paths[i] = path.canonicalize()?.to_str().unwrap().to_owned();
 
             // Check if the file is in a git repository
             let parent_dir = path.parent().unwrap_or(Path::new("/"));
@@ -112,7 +120,7 @@ impl Database {
         let transformation = Transformation {
             id: self.curr_id,
             md: md,
-            script_paths: script_paths,
+            script_paths: used_paths,
             script_args: script_args,
             script_git_hashes: used_hashes
         };
