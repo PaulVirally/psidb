@@ -1,27 +1,116 @@
+mod utils;
 mod database;
-use std::collections::HashMap;
-use ron::ser::{PrettyConfig, to_string_pretty};
+use clap::{Args, ArgGroup, Parser, Subcommand};
 use database::{Database, entry::action::Action};
 
-fn get_serde_config() -> ron::ser::PrettyConfig {
-    PrettyConfig::new()
-        .depth_limit(5)
-        .indentor("\t".to_owned())
-        .struct_names(true)
+#[derive(Parser)]
+#[clap(author, version, about, long_about = None)]
+#[clap(propagate_version = true)]
+struct Cli {
+    #[clap(subcommand)]
+    command: Commands,
 }
 
-fn main() {
-    let data_paths = vec!["test_dir/data/a/a1".to_owned(), "test_dir/data/a/a2".to_owned(), "test_dir/data/a/a3".to_owned(), "test_dir/data/b/b1".to_owned(), "test_dir/data/b/b2".to_owned(), "test_dir/data/b/ba/ba1".to_owned(), "test_dir/data/b/ba/ba2".to_owned(), "test_dir/data/c/ca/caa/caa1".to_owned()];
-    let md = Some(HashMap::from([("a".to_owned(), "0.123".to_owned()), ("b".to_owned(), "0.456".to_owned())]));
+#[derive(Subcommand)]
+enum Commands {
+    Init(Init),
+    AddData(AddData),
+    AddTransform(AddTransform),
+    Connect(Connect)
+}
 
-    let script_paths = vec!["test_dir/scripts/script1".to_owned(), "test_dir/scripts/script2".to_owned(), "test_dir/scripts/script3".to_owned(), "test_dir/scripts/script4".to_owned()];
-    let script_args = vec![Some(vec!["-a 1".to_owned(), "-b 2".to_owned()]), Some(vec!["-a=1 -b=2".to_owned()]), Some(vec!["-a".to_owned(), "1".to_owned(), "-b".to_owned(), "2".to_owned()]), None];
-    let script_git_hashes = vec![Some("0000111122223333444455556666777788889999".to_owned()), None, Some("0123456789abcdef0123456789abcdef01234567".to_owned()), None];
+#[derive(Args)]
+struct Init {
+    #[clap(value_parser)]
+    db_path: Option<String>,
+}
 
-    let mut db = Database::new();
-    let data_id = db.add_data(data_paths, md).unwrap();
-    let trans_id = db.add_transformation(script_paths, script_args, script_git_hashes, None).unwrap();
-    db.add_connection(Action::Apply, vec![data_id], vec![trans_id], None).unwrap();
+#[derive(Args)]
+struct AddData {
+    #[clap(long = "db")]
+    db_path: Option<String>,
+    
+    #[clap(long = "md")]
+    meta_data: Option<String>,
 
-    println!("{}", to_string_pretty(&db, get_serde_config()).unwrap());
+    #[clap(value_parser)]
+    data_paths: Vec<String>
+}
+
+#[derive(Args)]
+struct AddTransform {
+    #[clap(long = "db")]
+    db_path: Option<String>,
+    
+    #[clap(long = "md")]
+    meta_data: Option<String>,
+
+    #[clap(value_parser)]
+    script_paths: Vec<String>,
+
+    #[clap(long = "args")]
+    script_args: Option<String>,
+
+    #[clap(long = "hashes")]
+    script_git_hashes: Option<String>
+}
+
+#[derive(Args)]
+#[clap(group(
+    ArgGroup::new("ids")
+        .multiple(true)
+        .required(true)
+        .args(&["in-data-ids", "out-data-ids", "in-transform-ids", "out-transform-ids"])
+))]
+struct Connect {
+    #[clap(long = "db")]
+    db_path: Option<String>,
+
+    #[clap(long = "md")]
+    meta_data: Option<String>,
+
+    #[clap(arg_enum, short, long)]
+    action: Action,
+
+    #[clap(long)]
+    in_data_ids: Option<Vec<u64>>,
+
+    #[clap(long)]
+    out_data_ids: Option<Vec<u64>>,
+
+    #[clap(long)]
+    in_transform_ids: Option<Vec<u64>>,
+
+    #[clap(long)]
+    out_transform_ids: Option<Vec<u64>>,
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Cli::parse();
+
+    match args.command {
+        Commands::Init(Init{db_path}) => {
+            Database::init(db_path)?;
+        }
+        Commands::AddData(AddData{db_path, meta_data, data_paths}) => {
+            let mut db = Database::load(db_path)?;
+            let id = db.add_data(data_paths, meta_data)?;
+            db.write()?;
+            println!("Added data with id {}", id.to_string());
+        }
+        Commands::AddTransform(AddTransform{db_path, meta_data, script_paths, script_args, script_git_hashes}) => {
+            let mut db = Database::load(db_path)?;
+            let id = db.add_transform(script_paths, script_args, script_git_hashes, meta_data)?;
+            db.write()?;
+            println!("Added transform with id {}", id.to_string());
+        }
+        Commands::Connect(Connect{db_path, meta_data, action, in_data_ids, out_data_ids, in_transform_ids, out_transform_ids}) => {
+            let mut db = Database::load(db_path)?;
+            let id = db.connect(action, in_data_ids, out_data_ids, in_transform_ids, out_transform_ids, meta_data)?;
+            db.write()?;
+            println!("Added a connection with id {}", id.to_string());
+        }
+    }
+
+    Ok(())
 }

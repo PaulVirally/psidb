@@ -19,3 +19,5 @@ with open(in_path, 'r') as in_file:
 # Write to the output file
 with open(out_path, 'w') as out_file:
     out_file.writelines(out_lines)
+
+print(f'psidb::out_data::path::{out_path}')
