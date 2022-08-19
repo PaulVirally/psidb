@@ -21,7 +21,7 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn new(path_str: Option<String>) -> Result<Database, Box<dyn Error>> {
+    pub fn new(path_str: Option<&str>) -> Result<Database, Box<dyn Error>> {
         let db_dir = Self::get_psidb_dir(path_str);
         fs::DirBuilder::new().recursive(true).create(&db_dir).unwrap();
 
@@ -42,14 +42,14 @@ impl Database {
         })
     }
 
-    pub fn init(path_str: Option<String>) -> Result<(), Box<dyn Error>> {
+    pub fn init(path_str: Option<&str>) -> Result<(), Box<dyn Error>> {
         let db = Database::new(path_str)?;
         db.write()?;
         println!("Created database at {}", db.db_path);
         Ok(())
     }
 
-    pub fn load(path_str: Option<String>) -> Result<Database, Box<dyn Error>> {
+    pub fn load(path_str: Option<&str>) -> Result<Database, Box<dyn Error>> {
         let db_path = Self::get_psidb_dir(path_str).join("db.ron");
 
         // Check if db.ron exists
@@ -63,7 +63,7 @@ impl Database {
         Ok(db)
     }
 
-    fn get_psidb_dir(path_str: Option<String>) -> PathBuf {
+    fn get_psidb_dir(path_str: Option<&str>) -> PathBuf {
         let mut db_dir = if path_str.is_none() {
             home::home_dir().unwrap_or(PathBuf::from("./")).canonicalize().unwrap()
         } else {
@@ -91,7 +91,7 @@ impl Database {
         Ok(())
     }
 
-    fn parse_md(meta_data_str: Option<String>) -> HashMap<String, String> {
+    fn parse_md(meta_data_str: Option<&str>) -> HashMap<String, String> {
         if meta_data_str.is_none() {
             return HashMap::new()
         }
@@ -103,7 +103,32 @@ impl Database {
         md
     }
 
-    pub fn add_data(&mut self, data_paths: Vec<String>, meta_data_str: Option<String>) -> Result<u64, Box<dyn Error>> {
+    fn try_add_data(&mut self, mut data: Data) -> Result<u64, Box<dyn Error>> {
+        // Make sure the data is not empty
+        if data.paths.is_empty() {
+            println!("Error: No data paths");
+            return Err("No data paths".into());
+        }
+
+        // Check if the data already exists in the database
+        match entry_in(&data, &self.data_vec) {
+            (true, id) => {
+                println!("Error: Data with the same paths already exists at id {}", id);
+                return Err(format!("Data with the same paths already exists at id {}", id).into());
+            }
+            (false, ..) => {}
+        }
+        data.id = self.curr_id;
+
+        // Add the data to the database
+        self.data_vec.push(data);
+        self.curr_id += 1;
+
+        Ok(self.curr_id - 1)
+    }
+
+    pub fn add_data<T> (&mut self, data_paths: &[T], meta_data_str: Option<&str>) -> Result<u64, Box<dyn Error>> 
+    where T: AsRef<str> + AsRef<std::ffi::OsStr> + std::fmt::Display {
         // Check if the paths are valid and make the paths aboslute paths
         let mut used_paths: Vec<String> = vec!["".to_owned(); data_paths.len()];
         for (i, path) in data_paths.iter().enumerate() {
@@ -116,7 +141,7 @@ impl Database {
             }
         }
 
-        // Add the current time to the meta data if it doesn't already exisyy
+        // Add the current time to the meta data if it doesn't already exist
         let mut md = Self::parse_md(meta_data_str);
         if !md.contains_key("time") {
             md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
@@ -129,23 +154,12 @@ impl Database {
             paths: used_paths
         };
 
-        // Check if the data already exists in the database
-        match entry_in(&data, &self.data_vec) {
-            (true, id) => {
-                println!("Error: Data with the same paths already exists at id {}", id);
-                return Err(format!("Data with the same paths already exists at id {}", id).into());
-            }
-            (false, ..) => {}
-        }
-
         // Add the data to the database
-        self.data_vec.push(data);
-        self.curr_id += 1;
-
-        Ok(self.curr_id - 1)
+        self.try_add_data(data)
     }
 
-    pub fn add_transform(&mut self, script_paths: Vec<String>, script_args_str: Option<String>, script_git_hashes_str: Option<String>, meta_data_str: Option<String>) -> Result<u64, Box<dyn Error>> {
+    pub fn add_transform<T>(&mut self, script_paths: &[T], script_args_str: Option<&str>, script_git_hashes_str: Option<&str>, meta_data_str: Option<&str>) -> Result<u64, Box<dyn Error>>
+    where T: AsRef<str> + AsRef<std::ffi::OsStr> + std::fmt::Display {
         let script_args = utils::parse_kv_opt_string(script_args_str, Some(script_paths.len()));
         let script_git_hashes = utils::parse_kv_opt_string(script_git_hashes_str, Some(script_paths.len()));
 
@@ -159,21 +173,11 @@ impl Database {
         let mut used_hashes: Vec<Option<String>> = vec![None; script_paths.len()];
         let mut used_paths: Vec<String> = vec!["".to_owned(); script_paths.len()];
         for (i, (path_str, hash)) in script_paths.iter().zip(script_git_hashes).enumerate() {
-            let path = Path::new(path_str);
-
             // Make sure the script exists and is a file
-            if !path.exists() {
-                println!("Error: Script {} does not exist", path_str);
-                return Err(format!("Script {} does not exist", path_str).into());
-            }
-
-            // Make sure the script is a file
-            if !path.is_file() {
-                println!("Error: Script {} is not a file", path_str);
-                return Err(format!("Script {} is not a file", path_str).into());
-            }
+            utils::verify_file_path(path_str)?;
 
             // Get the absolute path of the script
+            let path = Path::new(path_str);
             used_paths[i] = path.canonicalize()?.to_str().unwrap().to_owned();
 
             // Check if the file is in a git repository
@@ -191,7 +195,7 @@ impl Database {
                 let oid = git2::Oid::from_str(hash.as_str())?;
                 let commit = repo.find_commit(oid);
                 if commit.is_err() {
-                    // TODO: Should this be a fata error instead of a warning?
+                    // TODO: Should this be a fatal error instead of a warning?
                     println!("Warning: Ignoring hash {} for {} because it is not a valid commit", hash, path_str);
                 }
                 else {
@@ -210,7 +214,7 @@ impl Database {
             used_hashes[i] = None;
         }
 
-        // Add the current time to the meta data if it doesn't already exisyy
+        // Add the current time to the meta data if it doesn't already exist
         let mut md = Self::parse_md(meta_data_str);
         if !md.contains_key("time") {
             md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
@@ -239,26 +243,26 @@ impl Database {
         Ok(self.curr_id - 1)
     }
 
-    pub fn connect(&mut self, action: Action, in_data_ids: Option<Vec<u64>>, out_data_ids: Option<Vec<u64>>, in_transform_ids: Option<Vec<u64>>, out_transform_ids: Option<Vec<u64>>, meta_data_str: Option<String>) -> Result<u64, Box<dyn Error>> {
+    pub fn connect(&mut self, action: Action, in_data_ids: Option<&[u64]>, out_data_ids: Option<&[u64]>, in_transform_ids: Option<&[u64]>, out_transform_ids: Option<&[u64]>, meta_data_str: Option<&str>) -> Result<u64, Box<dyn Error>> {
         // Make sure we have at least one data id or one transform id
         if in_data_ids.is_none() && out_data_ids.is_none() && in_transform_ids.is_none() && out_transform_ids.is_none() {
             println!("Error: Must provide at least one data id or transform id");
             return Err("Must provide at least one data id or transform id".into());
         }
 
-        let in_data_ids = in_data_ids.unwrap_or_else(|| vec![]);
-        let out_data_ids = out_data_ids.unwrap_or_else(|| vec![]);
-        let in_transform_ids = in_transform_ids.unwrap_or_else(|| vec![]);
-        let out_transform_ids = out_transform_ids.unwrap_or_else(|| vec![]);
+        let in_data_ids = in_data_ids.unwrap_or_else(|| &[]);
+        let out_data_ids = out_data_ids.unwrap_or_else(|| &[]);
+        let in_transform_ids = in_transform_ids.unwrap_or_else(|| &[]);
+        let out_transform_ids = out_transform_ids.unwrap_or_else(|| &[]);
         
         // Check to see if all the data_ids exist in the database
-        for id in in_data_ids.iter() {
+        for id in in_data_ids {
             if !id_in(*id, &self.data_vec) {
                 println!("Error: Input data with id {} does not exist", id);
                 return Err(format!("Input data with id {} does not exist", id).into());
             }
         }
-        for id in out_data_ids.iter() {
+        for id in out_data_ids {
             if !id_in(*id, &self.data_vec) {
                 println!("Error: Output data with id {} does not exist", id);
                 return Err(format!("Output data with id {} does not exist", id).into());
@@ -266,13 +270,13 @@ impl Database {
         }
 
         // Check to see if all the transform_ids exist in the database
-        for id in in_transform_ids.iter() {
+        for id in in_transform_ids {
             if !id_in(*id, &self.transform_vec) {
                 println!("Error: Input transform with id {} does not exist", id);
                 return Err(format!("Input transform with id {} does not exist", id).into());
             }
         }
-        for id in out_transform_ids.iter() {
+        for id in out_transform_ids {
             if !id_in(*id, &self.transform_vec) {
                 println!("Error: Output transform with id {} does not exist", id);
                 return Err(format!("Output transform with id {} does not exist", id).into());
@@ -289,10 +293,10 @@ impl Database {
             id: self.curr_id,
             md: md,
             action: action,
-            in_data_ids: in_data_ids,
-            out_data_ids: out_data_ids,
-            in_transform_ids: in_transform_ids,
-            out_transform_ids: out_transform_ids
+            in_data_ids: in_data_ids.to_vec(),
+            out_data_ids: out_data_ids.to_vec(),
+            in_transform_ids: in_transform_ids.to_vec(),
+            out_transform_ids: out_transform_ids.to_vec()
         };
 
         // Check if the connection already exists in the database
@@ -308,5 +312,48 @@ impl Database {
         self.curr_id += 1;
 
         Ok(self.curr_id - 1)
+    }
+
+    pub fn apply(&mut self, transform_id: u64, data_ids: &[u64], meta_data_str: Option<&str>) -> Result<(u64, u64), Box<dyn Error>> {
+        // Check if the transform exists
+        if !id_in(transform_id, &self.transform_vec) {
+            println!("Error: Transform with id {} does not exist", transform_id);
+            return Err(format!("Transform with id {} does not eixst", transform_id).into());
+        }
+
+        // Check if the data ids exist
+        for id in data_ids {
+            if !id_in(*id, &self.data_vec) {
+                println!("Error: Data with id {} does not exist", *id);
+                return Err(format!("Data with id {} does not eixst", *id).into());
+            }
+        }
+
+        // Get the transform
+        let transform = self.transform_vec.iter().find(|t| t.id == transform_id).unwrap();
+        
+        // Get the data
+        let mut data = Vec::with_capacity(data_ids.len());
+        for id in data_ids {
+            data.push(self.data_vec.iter().find(|d| d.id == *id).unwrap());
+        }
+
+        // Apply the scripts in the transform sequentially
+        let mut new_data = transform.apply(&data, self.curr_id)?;
+
+        // Add the current time to the meta data if it doesn't already exist
+        let mut md = Self::parse_md(meta_data_str);
+        if !md.contains_key("time") {
+            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
+        }
+        new_data.md = md;
+
+        // Add the data to the database
+        let new_data_id = self.try_add_data(new_data)?;
+
+        // Connect the new data to the transform
+        let new_connect_id = self.connect(Action::Apply, Some(data_ids), Some(&[new_data_id]), Some(&[transform_id]), None, meta_data_str)?;
+
+        Ok((new_data_id, new_connect_id))
     }
 }

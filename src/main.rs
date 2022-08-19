@@ -16,7 +16,8 @@ enum Commands {
     Init(Init),
     AddData(AddData),
     AddTransform(AddTransform),
-    Connect(Connect)
+    Connect(Connect),
+    Apply(Apply)
 }
 
 #[derive(Args)]
@@ -85,30 +86,51 @@ struct Connect {
     out_transform_ids: Option<Vec<u64>>,
 }
 
+#[derive(Args)]
+struct Apply {
+    #[clap(long = "db")]
+    db_path: Option<String>,
+
+    #[clap(long = "md")]
+    meta_data: Option<String>,
+
+    #[clap(short, long)]
+    transform_id: u64,
+
+    #[clap(short, long)]
+    data_ids: Vec<u64>
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
 
     match args.command {
         Commands::Init(Init{db_path}) => {
-            Database::init(db_path)?;
+            Database::init(db_path.as_deref())?;
         }
         Commands::AddData(AddData{db_path, meta_data, data_paths}) => {
-            let mut db = Database::load(db_path)?;
-            let id = db.add_data(data_paths, meta_data)?;
+            let mut db = Database::load(db_path.as_deref())?;
+            let id = db.add_data(&data_paths, meta_data.as_deref())?;
             db.write()?;
             println!("Added data with id {}", id.to_string());
         }
         Commands::AddTransform(AddTransform{db_path, meta_data, script_paths, script_args, script_git_hashes}) => {
-            let mut db = Database::load(db_path)?;
-            let id = db.add_transform(script_paths, script_args, script_git_hashes, meta_data)?;
+            let mut db = Database::load(db_path.as_deref())?;
+            let id = db.add_transform(&script_paths, script_args.as_deref(), script_git_hashes.as_deref(), meta_data.as_deref())?;
             db.write()?;
             println!("Added transform with id {}", id.to_string());
         }
         Commands::Connect(Connect{db_path, meta_data, action, in_data_ids, out_data_ids, in_transform_ids, out_transform_ids}) => {
-            let mut db = Database::load(db_path)?;
-            let id = db.connect(action, in_data_ids, out_data_ids, in_transform_ids, out_transform_ids, meta_data)?;
+            let mut db = Database::load(db_path.as_deref())?;
+            let id = db.connect(action, in_data_ids.as_deref(), out_data_ids.as_deref(), in_transform_ids.as_deref(), out_transform_ids.as_deref(), meta_data.as_deref())?;
             db.write()?;
             println!("Added a connection with id {}", id.to_string());
+        }
+        Commands::Apply(Apply{db_path, meta_data, transform_id, data_ids}) => {
+            let mut db = Database::load(db_path.as_deref())?;
+            let (data_id, connect_id) = db.apply(transform_id, &data_ids, meta_data.as_deref())?;
+            db.write()?;
+            println!("Added data with id {} and connection with id {}", data_id, connect_id);
         }
     }
 
