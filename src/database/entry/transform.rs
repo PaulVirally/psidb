@@ -47,22 +47,21 @@ impl Transform {
             utils::verify_file_path(&path)?;
 
             // Construct the args to pass to the script
-            let mut passed_args: Vec<&str> = data_paths.iter().map(AsRef::as_ref).collect();
+            let mut passed_args: Vec<String> = data_paths.clone(); // data_paths.iter().map(Asref::as_ref).collect();
             let derefed_args = args.as_ref().map(AsRef::as_ref).unwrap_or_default();
             let parsed_args = utils::parse_args(derefed_args, id);
-            passed_args.push(&parsed_args);
-            println!("Parsed args: {:?}", parsed_args);
-            println!("Passing args: {:?}", passed_args);
+            passed_args.push(parsed_args);
 
             // Run the script with the args provided
-            let output = Command::new(path).args(passed_args).output()?;
-            println!("Command: {:?}", path);
-            println!("Command output: {:?}", output);
+            let output = Command::new(path).args(&passed_args).output()?;
+            if !output.status.success() {
+                println!("Error: {} {} failed\nOutput:\n{:#?}", path, passed_args.join(" "), output);
+                return Err(format!("{} {} failed\nOutput:\n{:?}", path, passed_args.join(" "), output).into());
+            } 
+            println!("Ran: {} {}\nOutput:\n{:#?}", path, passed_args.join(" "), output);
 
             // Grab the output paths from the script to update data_paths
             data_paths = re.captures_iter(&output.stdout).map(|c| String::from_utf8(c[1].to_vec()).unwrap()).collect();
-            println!("Output paths: {:?}", data_paths);
-            println!("Captures: {:?}", re.captures_iter(&output.stdout).collect::<Vec<_>>());
 
             // Restore the repo to the state it was in before running the script
             if using_git && checkout_res.is_some() {

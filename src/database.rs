@@ -158,6 +158,30 @@ impl Database {
         self.try_add_data(data)
     }
 
+    fn try_add_transform(&mut self, mut transform: Transform) -> Result<u64, Box<dyn Error>> {
+        // Make sure there is at least one script path
+        if transform.script_paths.is_empty() {
+            println!("Error: No script paths");
+            return Err("No script paths".into());
+        }
+
+        // Check if the transform already exists in the database
+        match entry_in(&transform, &self.transform_vec) {
+            (true, id) => {
+                println!("Error: Transform with the same name already exists at id {}", id);
+                return Err(format!("Transform with the same name already exists at id {}", id).into());
+            }
+            (false, ..) => {}
+        }
+        transform.id = self.curr_id;
+
+        // Add the transform to the database
+        self.transform_vec.push(transform);
+        self.curr_id += 1;
+
+        Ok(self.curr_id - 1)
+    }
+
     pub fn add_transform<T>(&mut self, script_paths: &[T], script_args_str: Option<&str>, script_git_hashes_str: Option<&str>, meta_data_str: Option<&str>) -> Result<u64, Box<dyn Error>>
     where T: AsRef<str> + AsRef<std::ffi::OsStr> + std::fmt::Display {
         let script_args = utils::parse_kv_opt_string(script_args_str, Some(script_paths.len()));
@@ -165,7 +189,7 @@ impl Database {
 
         // Make sure that the script_paths, script_args, and script_git_hashes are the same length
         if script_paths.len() != script_args.len() || script_paths.len() != script_git_hashes.len() {
-            println!("script_paths, script_args, and script_git_hashes must be the same length");
+            println!("Error: script_paths, script_args, and script_git_hashes must be the same length");
             return Err("script_paths, script_args, and script_git_hashes must be the same length".into());
         }
 
@@ -228,19 +252,8 @@ impl Database {
             script_git_hashes: used_hashes
         };
 
-        // Check if the transform already exists in the database
-        match entry_in(&transform, &self.transform_vec) {
-            (true, id) => {
-                println!("Error: Transform with the same scripts, arguments, and hashes already exists at id {}", id);
-                return Err(format!("Transform with the same scripts, arguments, and hashes already exists at id {}", id).into());
-            }
-            (false, ..) => {}
-        }
-
-        self.transform_vec.push(transform);
-        self.curr_id += 1;
-
-        Ok(self.curr_id - 1)
+        // Add the transform
+        self.try_add_transform(transform)
     }
 
     pub fn connect(&mut self, action: Action, in_data_ids: Option<&[u64]>, out_data_ids: Option<&[u64]>, in_transform_ids: Option<&[u64]>, out_transform_ids: Option<&[u64]>, meta_data_str: Option<&str>) -> Result<u64, Box<dyn Error>> {
@@ -355,5 +368,52 @@ impl Database {
         let new_connect_id = self.connect(Action::Apply, Some(data_ids), Some(&[new_data_id]), Some(&[transform_id]), None, meta_data_str)?;
 
         Ok((new_data_id, new_connect_id))
+    }
+
+    pub fn chain(&mut self, transform_ids: &[u64], meta_data_str: Option<&str>) -> Result<u64, Box<dyn Error>> {
+        // Check if all the transforms exist
+        for id in transform_ids {
+            if !id_in(*id, &self.transform_vec) {
+                println!("Error: Transform with id {} does not exist", *id);
+                return Err(format!("Transform with id {} does not eixst", *id).into());
+            }
+        }
+        
+        // Get the transforms
+        let transforms = transform_ids
+            .iter()
+            .map(|id| self.transform_vec.iter().find(|t| t.id == *id)
+            .unwrap())
+            .collect::<Vec<&Transform>>();
+
+        // The metadata for this new transform
+        let mut given_md = Self::parse_md(meta_data_str);
+        if !given_md.contains_key("time") {
+            given_md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
+        }
+
+        let mut md = HashMap::new();
+        let mut script_paths = vec![]; 
+        let mut script_args = vec![];
+        let mut script_git_hashes = vec![];
+        for transform in &transforms {
+            md.extend(transform.md.iter().map(|(k, v)| (k.clone(), v.clone())));
+            script_paths.extend(transform.script_paths.iter().map(|s| s.clone()));
+            script_args.extend(transform.script_args.iter().map(|s| s.clone()));
+            script_git_hashes.extend(transform.script_git_hashes.iter().map(|s| s.clone()));
+        }
+        md.extend(given_md);
+
+        // Create the new transform
+        let transform = Transform {
+            id: self.curr_id,
+            md: md,
+            script_paths: script_paths,
+            script_args: script_args,
+            script_git_hashes: script_git_hashes
+        };
+
+        // Add the transform to the database
+        self.try_add_transform(transform)
     }
 }

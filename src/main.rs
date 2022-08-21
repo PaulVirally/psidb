@@ -17,7 +17,8 @@ enum Commands {
     AddData(AddData),
     AddTransform(AddTransform),
     Connect(Connect),
-    Apply(Apply)
+    Apply(Apply),
+    Chain(Chain)
 }
 
 #[derive(Args)]
@@ -101,6 +102,18 @@ struct Apply {
     data_ids: Vec<u64>
 }
 
+#[derive(Args)]
+struct Chain {
+    #[clap(long = "db")]
+    db_path: Option<String>,
+
+    #[clap(long = "md")]
+    meta_data: Option<String>,
+
+    #[clap(short, long)]
+    transform_ids: Vec<u64>
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
 
@@ -131,6 +144,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let (data_id, connect_id) = db.apply(transform_id, &data_ids, meta_data.as_deref())?;
             db.write()?;
             println!("Added data with id {} and connection with id {}", data_id, connect_id);
+        }
+        Commands::Chain(Chain{db_path, meta_data, transform_ids}) => {
+            let mut db = Database::load(db_path.as_deref())?;
+            let id = db.chain(&transform_ids, meta_data.as_deref())?;
+            db.write()?;
+            println!("Added transform with id {}", id.to_string());
         }
     }
 
