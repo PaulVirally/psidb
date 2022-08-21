@@ -160,15 +160,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Commands::Chain(Chain{db_path, meta_data, transform_ids}) => {
             let mut db = Database::load(db_path.as_deref())?;
-            let id = db.chain(&transform_ids, meta_data.as_deref())?;
+            let (transform_id, connect_id) = db.chain(&transform_ids, meta_data.as_deref())?;
             db.write()?;
-            println!("Added transform with id {}", id.to_string());
+            println!("Added transform with id {} and connection with id {}", transform_id.to_string(), connect_id.to_string());
         }
         Commands::Link(Link{db_path, meta_data, data_ids}) => {
             let mut db = Database::load(db_path.as_deref())?;
-            let id = db.link(&data_ids, meta_data.as_deref())?;
+            let (data_id, connect_id) = db.link(&data_ids, meta_data.as_deref())?;
             db.write()?;
-            println!("Added data with id {}", id.to_string());
+            println!("Added data with id {} and connection with id {}", data_id.to_string(), connect_id.to_string());
         }
     }
 

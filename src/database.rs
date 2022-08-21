@@ -370,7 +370,7 @@ impl Database {
         Ok((new_data_id, new_connect_id))
     }
 
-    pub fn chain(&mut self, transform_ids: &[u64], meta_data_str: Option<&str>) -> Result<u64, Box<dyn Error>> {
+    pub fn chain(&mut self, transform_ids: &[u64], meta_data_str: Option<&str>) -> Result<(u64, u64), Box<dyn Error>> {
         // Check if all the transforms exist
         for id in transform_ids {
             if !id_in(*id, &self.transform_vec) {
@@ -414,10 +414,15 @@ impl Database {
         };
 
         // Add the transform to the database
-        self.try_add_transform(transform)
+        let new_transform_id = self.try_add_transform(transform)?;
+
+        // Connect the new data to the transform
+        let new_connect_id = self.connect(Action::Chain, None, None, Some(transform_ids), Some(&[new_transform_id]), meta_data_str)?;
+
+        Ok((new_transform_id, new_connect_id))
     }
 
-    pub fn link(&mut self, data_ids: &[u64], meta_data_str: Option<&str>) -> Result<u64, Box<dyn Error>> {
+    pub fn link(&mut self, data_ids: &[u64], meta_data_str: Option<&str>) -> Result<(u64, u64), Box<dyn Error>> {
         // Check if the data ids exist
         for id in data_ids {
             if !id_in(*id, &self.data_vec) {
@@ -454,6 +459,11 @@ impl Database {
         };
 
         // Add the data to the database
-        self.try_add_data(data)
+        let new_data_id = self.try_add_data(data)?;
+
+        // Connect the new data to the transform
+        let new_connect_id = self.connect(Action::Link, Some(data_ids), Some(&[new_data_id]), None, None, meta_data_str)?;
+
+        Ok((new_data_id, new_connect_id))
     }
 }
