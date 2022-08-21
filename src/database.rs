@@ -416,4 +416,44 @@ impl Database {
         // Add the transform to the database
         self.try_add_transform(transform)
     }
+
+    pub fn link(&mut self, data_ids: &[u64], meta_data_str: Option<&str>) -> Result<u64, Box<dyn Error>> {
+        // Check if the data ids exist
+        for id in data_ids {
+            if !id_in(*id, &self.data_vec) {
+                println!("Error: Data with id {} does not exist", *id);
+                return Err(format!("Data with id {} does not eixst", *id).into());
+            }
+        }
+        
+        // Get the data
+        let all_data = data_ids
+            .iter()
+            .map(|id| self.data_vec.iter().find(|d| d.id == *id).unwrap())
+            .collect::<Vec<&Data>>();
+        
+        // The metadata for this new transform
+        let mut given_md = Self::parse_md(meta_data_str);
+        if !given_md.contains_key("time") {
+            given_md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
+        }
+
+        let mut md = HashMap::new();
+        let mut paths = vec![];
+        for data in &all_data {
+            md.extend(data.md.iter().map(|(k, v)| (k.clone(), v.clone())));
+            paths.extend(data.paths.iter().map(|s| s.clone()));
+        }
+        md.extend(given_md);
+
+        // Create the new data
+        let data = Data {
+            id: self.curr_id,
+            md: md,
+            paths: paths
+        };
+
+        // Add the data to the database
+        self.try_add_data(data)
+    }
 }
