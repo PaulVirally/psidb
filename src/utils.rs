@@ -1,10 +1,7 @@
 use regex::Regex;
 use chrono::Utc;
 
-pub fn is_permutation_small<T>(lhs: &[T], rhs: &[T]) -> bool
-where
-    T: PartialEq,
-{
+pub fn is_permutation_small<T: PartialEq>(lhs: &[T], rhs: &[T]) -> bool {
     if lhs.len() != rhs.len() {
         return false;
     }
