@@ -5,6 +5,6 @@
 * [ ] GUI
    - [ ] Visualize the entries in the database
    - [ ] Add data to the database through the GUI
-* [ ] Data entegrity
+* [ ] Data integrity
     - [ ] Make a backup of the database before writing the new database
     - [ ] Maybe use SQL-style commits/transactions?

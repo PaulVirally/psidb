@@ -155,7 +155,7 @@ struct Link {
     #[clap(long = "md")]
     meta_data: Option<String>,
 
-    /// The ids of the datasets to link togeth
+    /// The ids of the datasets to link together
     #[clap(short, long)]
     data_ids: Vec<u64>
 }
