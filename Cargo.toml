@@ -1,2 +1,2 @@
 [workspace]
-members = ["psidb-lib", "cli"]
+members = ["psidb-lib", "cli", "gui/src-tauri"]
