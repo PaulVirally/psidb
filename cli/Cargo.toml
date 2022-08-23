@@ -1,0 +1,14 @@
+[package]
+name = "psidb"
+version = "0.1.0"
+authors = ["Paul Virally <pvirally@gmail.com>"]
+edition = "2021"
+description = "A sci(ψ)entific database management system designed to help you remember which datasets correspond to which experiments!"
+repository = "https://github.com/PaulVirally/psidb"
+license = "MIT"
+keywords = ["database", "scientific", "science"]
+categories = ["command-line-utilities", "database-implementations", "science"]
+
+[dependencies]
+psidb-lib = { path = "../psidb-lib" }
+clap = { version = "3.2", features = ["derive"] }

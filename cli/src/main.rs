@@ -1,7 +1,5 @@
-mod utils;
-mod database;
 use clap::{Args, ArgGroup, Parser, Subcommand};
-use database::{Database, entry::action::Action};
+use psidb_lib::database::{Database, entry::action::Action};
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
