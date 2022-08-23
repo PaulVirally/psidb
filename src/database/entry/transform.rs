@@ -22,7 +22,7 @@ impl Transform {
         let re = regex::bytes::Regex::new(r"psidb::out_path (.*)")?;
 
         // The paths for the first script
-        let mut data_paths = if data.len() > 0 {
+        let mut data_paths = if !data.is_empty() {
             data.first().unwrap().paths.clone()
         } else {
             vec![]
@@ -64,15 +64,15 @@ impl Transform {
             data_paths = re.captures_iter(&output.stdout).map(|c| String::from_utf8(c[1].to_vec()).unwrap()).collect();
 
             // Restore the repo to the state it was in before running the script
-            if using_git && checkout_res.is_some() {
+            if let (true, Some(checkout_res)) = (using_git, checkout_res) {
                 // TODO: Checking out and restoring the repo is something RAII should be able to do
-                let (did_restore, head) = checkout_res.unwrap();
+                let (did_restore, head) = checkout_res;
                 utils::safe_git_checkout_commit_restore(repo.as_mut().unwrap(), did_restore, &head)?;
             }
         }
 
         let new_data = Data {
-            id: id,
+            id,
             md: HashMap::new(),
             paths: data_paths
         };
@@ -85,10 +85,6 @@ impl std::cmp::PartialEq for Transform {
         (self.script_paths == other.script_paths) &&
         (self.script_args == other.script_args) &&
         (self.script_git_hashes == other.script_git_hashes)
-    }
-
-    fn ne(&self, other: &Transform) -> bool {
-        !self.eq(other)
     }
 }
 

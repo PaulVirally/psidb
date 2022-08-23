@@ -6,7 +6,6 @@ use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use ron::ser::{PrettyConfig, to_writer_pretty};
 use chrono::{Utc, SecondsFormat};
-use home;
 use entry::{data::Data, transform::Transform, connection::Connection, action::Action};
 use super::utils;
 use entry::{entry_in, id_in};
@@ -64,14 +63,14 @@ impl Database {
     }
 
     fn get_psidb_dir(path_str: Option<&str>) -> PathBuf {
-        let mut db_dir = if path_str.is_none() {
-            home::home_dir().unwrap_or(PathBuf::from("./")).canonicalize().unwrap()
+        let mut db_dir = if let Some(path_str) = path_str {
+            PathBuf::from(&path_str).canonicalize().unwrap()
         } else {
-            PathBuf::from(&path_str.unwrap()).canonicalize().unwrap()
+            home::home_dir().unwrap_or_else(|| PathBuf::from("./")).canonicalize().unwrap()
         };
         // Make sure db_dir is a directory
         if !db_dir.as_path().is_dir() {
-            db_dir = db_dir.parent().unwrap_or(Path::new("/")).to_path_buf();
+            db_dir = db_dir.parent().unwrap_or_else(|| Path::new("/")).to_path_buf();
         }
 
         // The hidden directory .psidb stores the database
@@ -144,13 +143,13 @@ impl Database {
         // Add the current time to the meta data if it doesn't already exist
         let mut md = Self::parse_md(meta_data_str);
         if !md.contains_key("time") {
-            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
+            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true));
         }
 
         // Construct the data
         let data = Data {
             id: self.curr_id,
-            md: md,
+            md,
             paths: used_paths
         };
 
@@ -205,17 +204,16 @@ impl Database {
             used_paths[i] = path.canonicalize()?.to_str().unwrap().to_owned();
 
             // Check if the file is in a git repository
-            let parent_dir = path.parent().unwrap_or(Path::new("/"));
+            let parent_dir = path.parent().unwrap_or_else(|| Path::new("/"));
             let repo = git2::Repository::discover(parent_dir);
-            if !repo.is_ok() {
+            if repo.is_err() {
                 used_hashes[i] = None;
                 continue;
             }
             let repo = repo?;
 
-            if hash.is_some() {
+            if let Some(hash) = hash {
                 // Check if the hash is a valid commit
-                let hash = hash.unwrap();
                 let oid = git2::Oid::from_str(hash.as_str())?;
                 let commit = repo.find_commit(oid);
                 if commit.is_err() {
@@ -230,9 +228,9 @@ impl Database {
 
             // Get the hash of the latest commit
             let target = repo.head()?.target();
-            if target.is_some() {
+            if let Some(target) = target {
                 // If the repository has a head, get the hash of the latest commit
-                used_hashes[i] = Some(target.unwrap().to_string());
+                used_hashes[i] = Some(target.to_string());
                 continue;
             }
             used_hashes[i] = None;
@@ -241,14 +239,14 @@ impl Database {
         // Add the current time to the meta data if it doesn't already exist
         let mut md = Self::parse_md(meta_data_str);
         if !md.contains_key("time") {
-            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
+            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true));
         }
 
         let transform = Transform {
             id: self.curr_id,
-            md: md,
+            md,
             script_paths: used_paths,
-            script_args: script_args,
+            script_args,
             script_git_hashes: used_hashes
         };
 
@@ -263,10 +261,10 @@ impl Database {
             return Err("Must provide at least one data id or transform id".into());
         }
 
-        let in_data_ids = in_data_ids.unwrap_or_else(|| &[]);
-        let out_data_ids = out_data_ids.unwrap_or_else(|| &[]);
-        let in_transform_ids = in_transform_ids.unwrap_or_else(|| &[]);
-        let out_transform_ids = out_transform_ids.unwrap_or_else(|| &[]);
+        let in_data_ids = in_data_ids.unwrap_or(&[]);
+        let out_data_ids = out_data_ids.unwrap_or(&[]);
+        let in_transform_ids = in_transform_ids.unwrap_or(&[]);
+        let out_transform_ids = out_transform_ids.unwrap_or(&[]);
         
         // Check to see if all the data_ids exist in the database
         for id in in_data_ids {
@@ -299,13 +297,13 @@ impl Database {
         // Add the current time to the meta data if it doesn't already exist
         let mut md = Self::parse_md(meta_data_str);
         if !md.contains_key("time") {
-            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
+            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true));
         }
 
         let connection = Connection {
             id: self.curr_id,
-            md: md,
-            action: action,
+            md,
+            action,
             in_data_ids: in_data_ids.to_vec(),
             out_data_ids: out_data_ids.to_vec(),
             in_transform_ids: in_transform_ids.to_vec(),
@@ -357,7 +355,7 @@ impl Database {
         // Add the current time to the meta data if it doesn't already exist
         let mut md = Self::parse_md(meta_data_str);
         if !md.contains_key("time") {
-            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
+            md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true));
         }
         new_data.md = md;
 
@@ -389,7 +387,7 @@ impl Database {
         // The metadata for this new transform
         let mut given_md = Self::parse_md(meta_data_str);
         if !given_md.contains_key("time") {
-            given_md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
+            given_md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true));
         }
 
         let mut md = HashMap::new();
@@ -398,19 +396,19 @@ impl Database {
         let mut script_git_hashes = vec![];
         for transform in &transforms {
             md.extend(transform.md.iter().map(|(k, v)| (k.clone(), v.clone())));
-            script_paths.extend(transform.script_paths.iter().map(|s| s.clone()));
-            script_args.extend(transform.script_args.iter().map(|s| s.clone()));
-            script_git_hashes.extend(transform.script_git_hashes.iter().map(|s| s.clone()));
+            script_paths.extend(transform.script_paths.iter().cloned());
+            script_args.extend(transform.script_args.iter().cloned());
+            script_git_hashes.extend(transform.script_git_hashes.iter().cloned());
         }
         md.extend(given_md);
 
         // Create the new transform
         let transform = Transform {
             id: self.curr_id,
-            md: md,
-            script_paths: script_paths,
-            script_args: script_args,
-            script_git_hashes: script_git_hashes
+            md,
+            script_paths,
+            script_args,
+            script_git_hashes
         };
 
         // Add the transform to the database
@@ -440,22 +438,22 @@ impl Database {
         // The metadata for this new transform
         let mut given_md = Self::parse_md(meta_data_str);
         if !given_md.contains_key("time") {
-            given_md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true).to_owned());
+            given_md.insert("time".to_owned(), Utc::now().to_rfc3339_opts(SecondsFormat::Nanos, true));
         }
 
         let mut md = HashMap::new();
         let mut paths = vec![];
         for data in &all_data {
             md.extend(data.md.iter().map(|(k, v)| (k.clone(), v.clone())));
-            paths.extend(data.paths.iter().map(|s| s.clone()));
+            paths.extend(data.paths.iter().cloned());
         }
         md.extend(given_md);
 
         // Create the new data
         let data = Data {
             id: self.curr_id,
-            md: md,
-            paths: paths
+            md,
+            paths
         };
 
         // Add the data to the database

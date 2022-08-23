@@ -22,10 +22,6 @@ impl std::cmp::PartialEq for Connection {
         (self.in_transform_ids == other.in_transform_ids) &&
         (self.out_transform_ids == other.out_transform_ids)
     }
-    
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
-    }
 }
 
 impl Entry for Connection {

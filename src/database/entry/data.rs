@@ -14,10 +14,6 @@ impl std::cmp::PartialEq for Data {
     fn eq(&self, rhs: &Data) -> bool {
         utils::is_permutation_small(&self.paths, &rhs.paths)
     }
-
-    fn ne(&self, rhs: &Data) -> bool {
-        !self.eq(rhs)
-    }
 }
 
 impl Entry for Data {
