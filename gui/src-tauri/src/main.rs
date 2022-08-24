@@ -62,7 +62,7 @@ fn init_db(state: AppState, db_path: &str) -> bool {
         }
         data.db = Some(db.unwrap());
     }
-    data.db_path = data.db.as_ref().unwrap().get_db_path();
+    data.db_path = data.db.as_ref().unwrap().get_db_path(); // Update the path
 
     passed
 }

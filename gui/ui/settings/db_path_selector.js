@@ -11,7 +11,7 @@ async function choose_db_path() {
         title: "Choose the directory containing the database (db.ron)"
     });
     if (Array.isArray(db_path) || db_path === null) {
-        path = "";
+        db_path = "";
     }
     const db_loaded = await invoke("load_db", {dbPath: db_path});
     if (!db_loaded) {

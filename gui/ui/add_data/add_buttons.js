@@ -11,12 +11,12 @@ function goto(location) {
     window.location.href = location;
 }
 
-add_data = () => {goto("/add_data/add_data.html")};
-add_transform = () => {goto("/add_data/add_transform.html")};
-chain_transforms = () => {goto("/add_data/chain_transforms.html")};
-link_data = () => {goto("/add_data/link_data.html")};
-apply_transform = () => {goto("/add_data/apply_transform.html")};
-init_db = () => {goto("/add_data/init_db.html")};
+add_data = () => {goto("/add_data/add_data/index.html")};
+add_transform = () => {goto("/add_data/add_transform/index.html")};
+chain_transforms = () => {goto("/add_data/chain_transforms/index.html")};
+link_data = () => {goto("/add_data/link_data/index.html")};
+apply_transform = () => {goto("/add_data/apply_transform/index.html")};
+init_db = () => {goto("/add_data/init_db/index.html")};
 
 invoke("is_db_loaded").then((db_loaded) => {
     const container = document.getElementById("btn-container");
