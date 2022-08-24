@@ -63,10 +63,11 @@ impl Database {
     }
 
     pub fn get_psidb_dir(path_str: Option<&str>) -> PathBuf {
+        let default_path = home::home_dir().unwrap_or_else(|| PathBuf::from("./")).canonicalize().unwrap();
         let mut db_dir = if let Some(path_str) = path_str {
-            PathBuf::from(&path_str).canonicalize().unwrap()
+            PathBuf::from(&path_str).canonicalize().unwrap_or(default_path)
         } else {
-            home::home_dir().unwrap_or_else(|| PathBuf::from("./")).canonicalize().unwrap()
+            default_path
         };
         // Make sure db_dir is a directory
         if !db_dir.as_path().is_dir() {
