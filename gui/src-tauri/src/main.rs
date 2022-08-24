@@ -26,6 +26,7 @@ fn load_db(state: AppState, db_path: &str) -> bool {
     let db = Database::load(Some(&data.db_path));
     if db.is_err() {
         println!("Could not load database at {:#?}", db_path);
+        data.db = None; // Unload the database if the path provided is not valid
         return false;
     }
     data.db = Some(db.unwrap());
@@ -36,6 +37,12 @@ fn load_db(state: AppState, db_path: &str) -> bool {
 fn get_curr_psidb_dir(state: AppState) -> String {
     let data = state.lock().unwrap();
     data.db_path.clone()
+}
+
+#[tauri::command]
+fn is_db_loaded(state: AppState) -> bool {
+    let data = state.lock().unwrap();
+    data.db.is_some()
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -56,7 +63,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ))
         .invoke_handler(tauri::generate_handler![
             load_db,
-            get_curr_psidb_dir])
+            get_curr_psidb_dir,
+            is_db_loaded
+        ])
         .run(tauri::generate_context!())?;
     Ok(())
 }
