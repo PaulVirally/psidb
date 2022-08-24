@@ -39,11 +39,19 @@ fn get_curr_psidb_dir(state: AppState) -> String {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let db_path = Database::get_psidb_dir(None).into_os_string().into_string().unwrap();
+    let db = Database::load(None);
+    let db = if db.is_err() {
+        None
+    } else {
+        Some(db.unwrap())
+    };
+
     tauri::Builder::default()
         .manage(Mutex::new(
             AppData {
-                db_path: Database::get_psidb_dir(None).into_os_string().into_string().unwrap(),
-                db: None
+                db_path,
+                db
             }
         ))
         .invoke_handler(tauri::generate_handler![

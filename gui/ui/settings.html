@@ -48,13 +48,13 @@
             }
             if (path === null) {
                 // If the path chosen did not have a db.ron file, make sure we still get the path that was chosen by the user
-                path = await invoke('get_curr_psidb_dir');
+                path = await invoke("get_curr_psidb_dir");
             }
             document.getElementById("db-path-selector-result").innerHTML = path;
         }
         
         // Populate the db path selector with the default value of $HOME/.psidb
-        invoke('get_curr_psidb_dir').then((response) => update_db_path_selector(response));
+        invoke("get_curr_psidb_dir").then((response) => update_db_path_selector(response));
         document.getElementById("db-path-selector-btn").addEventListener("click", () => {update_db_path_selector(null)});
     </script>
 </body>
