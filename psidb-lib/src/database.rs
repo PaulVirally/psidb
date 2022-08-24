@@ -77,7 +77,11 @@ impl Database {
         // The hidden directory .psidb stores the database
         db_dir.push(".psidb/");
         db_dir
-    } 
+    }
+
+    pub fn get_db_path(&self) -> String {
+        self.db_path.clone()
+    }
 
     pub fn write(&self) -> Result<(), Box<dyn Error>> {
         let serde_conf = PrettyConfig::new()
