@@ -62,7 +62,7 @@ impl Database {
         Ok(db)
     }
 
-    fn get_psidb_dir(path_str: Option<&str>) -> PathBuf {
+    pub fn get_psidb_dir(path_str: Option<&str>) -> PathBuf {
         let mut db_dir = if let Some(path_str) = path_str {
             PathBuf::from(&path_str).canonicalize().unwrap()
         } else {
