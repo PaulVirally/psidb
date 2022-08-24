@@ -36,6 +36,7 @@ fn load_db(state: AppState, db_path: &str) -> bool {
 #[tauri::command]
 fn get_curr_psidb_dir(state: AppState) -> String {
     let data = state.lock().unwrap();
+    println!("Path: {}", data.db_path);
     data.db_path.clone()
 }
 
@@ -43,6 +44,27 @@ fn get_curr_psidb_dir(state: AppState) -> String {
 fn is_db_loaded(state: AppState) -> bool {
     let data = state.lock().unwrap();
     data.db.is_some()
+}
+
+#[tauri::command]
+fn init_db(state: AppState, db_path: &str) -> bool {
+    let mut data = state.lock().unwrap();
+
+    let passed = Database::init(Some(db_path)).is_ok();
+    if passed {
+        // Try to load the data
+        let db = Database::load(Some(db_path));
+        if db.is_err() {
+            // Unload the database and return false if we could not load the database after initializing it
+            data.db_path = db_path.to_string();
+            data.db = None;
+            return false;
+        }
+        data.db = Some(db.unwrap());
+    }
+    data.db_path = data.db.as_ref().unwrap().get_db_path();
+
+    passed
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -64,7 +86,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .invoke_handler(tauri::generate_handler![
             load_db,
             get_curr_psidb_dir,
-            is_db_loaded
+            is_db_loaded,
+            init_db
         ])
         .run(tauri::generate_context!())?;
     Ok(())
