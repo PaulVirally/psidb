@@ -30,7 +30,7 @@ async function update_db_path_selector(path=null) {
         // If the path chosen did not have a db.ron file, make sure we still get the path that was chosen by the user
         path = await invoke("get_curr_psidb_dir");
     }
-    document.getElementById("db-path-selector-result").innerHTML = path;
+    document.getElementById("db-path-selector-result").innerText = path;
 }
 
 // Populate the db path selector with the default value of $HOME/.psidb
