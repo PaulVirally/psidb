@@ -1,4 +1,4 @@
-add_data.md = function () { // Wrap everything in a closure
+(function () { // Wrap everything in a closure
     function add_md_entry() {
         const form = document.getElementById("md-form");
         const idx = form.childElementCount;
@@ -22,4 +22,4 @@ add_data.md = function () { // Wrap everything in a closure
 
     const entry_btn = document.getElementById("add-md-entry-btn");
     entry_btn.addEventListener("click", add_md_entry);
-}();
+})();

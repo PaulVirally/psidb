@@ -1,4 +1,4 @@
-add_data.data = function () { // Wrap everything in a closure
+(function () { // Wrap everything in a closure
     let path_idx = 0;
 
     function remove_path(idx) {
@@ -28,11 +28,11 @@ add_data.data = function () { // Wrap everything in a closure
         // Get the paths from the user's file system
         const open_out = await open({
             multiple: true,
-            title: "Choose the path(s) to your data"
+            title: "Choose the path(s)"
         });
         const paths = Array.isArray(open_out ?? []) ? (open_out ?? []) : [open_out]; // Turns out you *can* have fun writing frontend code :D
 
-        // Add the elemtns that contain the path and the remove path button
+        // Add the elements that contain the path and the remove path button
         const container = document.getElementById("paths");
         const size = container.childElementCount;
         for (const [i, path] of paths.entries()) {
@@ -43,4 +43,4 @@ add_data.data = function () { // Wrap everything in a closure
 
     const path_btn = document.getElementById("add-path-btn");
     path_btn.addEventListener("click", add_paths);
-}();
+})();
