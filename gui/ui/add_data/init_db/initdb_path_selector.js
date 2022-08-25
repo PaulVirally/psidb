@@ -4,8 +4,9 @@ const message = window.__TAURI__.dialog.message;
 const open = window.__TAURI__.dialog.open;
 
 async function choose_db_path() {
+    const default_path = await invoke("get_curr_psidb_dir");
     let db_path = await open({
-        defaultPath: "/Users/pvirally/Desktop/does/not/exist/",
+        defaultPath: default_path,
         directory: true,
         multiple: false,
         recursive: false,
