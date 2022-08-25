@@ -68,11 +68,10 @@ fn init_db(state: AppState, db_path: &str) -> bool {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db_path = Database::get_psidb_dir(None).into_os_string().into_string().unwrap();
-    let db = Database::load(None);
-    let db = if db.is_err() {
-        None
+    let db = if let Ok(db) = Database::load(None) {
+        Some(db)
     } else {
-        Some(db.unwrap())
+        None
     };
 
     tauri::Builder::default()
