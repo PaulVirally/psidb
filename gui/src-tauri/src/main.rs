@@ -36,7 +36,6 @@ fn load_db(state: AppState, db_path: &str) -> bool {
 #[tauri::command]
 fn get_curr_psidb_dir(state: AppState) -> String {
     let data = state.lock().unwrap();
-    println!("Path: {}", data.db_path);
     data.db_path.clone()
 }
 
