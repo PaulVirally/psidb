@@ -66,6 +66,19 @@ fn init_db(state: AppState, db_path: &str) -> bool {
     passed
 }
 
+#[tauri::command]
+fn add_data(state: AppState, data_paths: Vec<&str>, meta_data_str: &str) -> bool {
+    let mut data = state.lock().unwrap();
+
+    if data.db.is_some() {
+        let db = data.db.as_mut().unwrap();
+        if db.add_data(&data_paths, Some(meta_data_str)).is_ok() {
+            return db.write().is_ok();
+        }
+    }
+    false
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db_path = Database::get_psidb_dir(None).into_os_string().into_string().unwrap();
     let db = if let Ok(db) = Database::load(None) {
@@ -85,7 +98,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             load_db,
             get_curr_psidb_dir,
             is_db_loaded,
-            init_db
+            init_db,
+            add_data
         ])
         .run(tauri::generate_context!())?;
     Ok(())
