@@ -9,7 +9,7 @@
       * [ ] Add data
          - [x] Basic functionality
          - [ ] Add templates for metadata formatting
-      * [ ] Add transforms
+      * [x] Add transforms
       * [ ] Apply transform
       * [ ] Chain transforms
       * [ ] Link datasets

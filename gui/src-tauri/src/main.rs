@@ -70,13 +70,29 @@ fn init_db(state: AppState, db_path: &str) -> bool {
 fn add_data(state: AppState, data_paths: Vec<&str>, meta_data_str: &str) -> bool {
     let mut data = state.lock().unwrap();
 
-    if data.db.is_some() {
-        let db = data.db.as_mut().unwrap();
-        if db.add_data(&data_paths, Some(meta_data_str)).is_ok() {
-            return db.write().is_ok();
-        }
+    if data.db.is_none() {
+        return false;
     }
-    false
+
+    let db = data.db.as_mut().unwrap();
+    if db.add_data(&data_paths, Some(meta_data_str)).is_err() {
+        return false;
+    }
+    db.write().is_ok()
+}
+
+#[tauri::command]
+fn add_transform(state: AppState, script_paths: Vec<&str>, script_args_str: &str, meta_data_str: &str) -> bool {
+    let mut data = state.lock().unwrap();
+
+    if data.db.is_none() {
+        return false;
+    }
+    let db = data.db.as_mut().unwrap();
+    if db.add_transform(&script_paths, Some(script_args_str), None, Some(meta_data_str)).is_err() {
+        return false;
+    }
+    db.write().is_ok()
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -99,7 +115,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             get_curr_psidb_dir,
             is_db_loaded,
             init_db,
-            add_data
+            add_data,
+            add_transform
         ])
         .run(tauri::generate_context!())?;
     Ok(())
