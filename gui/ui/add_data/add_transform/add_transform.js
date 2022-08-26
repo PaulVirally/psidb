@@ -13,6 +13,10 @@
     }
 
     async function try_add_transform() {
+        if (!await is_db_loaded()) {
+            return;
+        }
+
         const [paths, paths_ok] = await get_paths();
         const args = get_script_args();
         const [md, md_ok] = await get_md();
