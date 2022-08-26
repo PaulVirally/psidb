@@ -14,13 +14,12 @@
    - [ ] Visualize the entries in the database
    - [ ] Add data to the database through the GUI
       * [x] Init database
-      * [ ] Add data
-         - [x] Basic functionality
-         - [ ] Add templates for metadata formatting
+      * [x] Add data
       * [x] Add transforms
       * [ ] Apply transform
       * [ ] Chain transforms
       * [ ] Link datasets
+      * [ ] Add templates for metadata formatting
    - [ ] Aesthetics
 * [ ] Data integrity
     - [ ] Make a backup of the database before writing the new database
