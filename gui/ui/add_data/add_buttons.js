@@ -17,6 +17,7 @@ chain_transforms = () => {goto("/add_data/chain_transforms/index.html")};
 link_data = () => {goto("/add_data/link_data/index.html")};
 apply_transform = () => {goto("/add_data/apply_transform/index.html")};
 init_db = () => {goto("/add_data/init_db/index.html")};
+connect = () => {goto("/add_data/connect/index.html")};
 
 invoke("is_db_loaded").then((db_loaded) => {
     const container = document.getElementById("btn-container");
@@ -36,6 +37,9 @@ invoke("is_db_loaded").then((db_loaded) => {
         
         const apply_btn = create_button("Apply Transform", apply_transform);
         container.appendChild(apply_btn);
+
+        const connect_btn = create_button("Connect Entries", connect);
+        container.appendChild(connect_btn);
     }
     else {
         // Could not load the database, warn the user and invite them to initialize the database
