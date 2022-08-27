@@ -5,8 +5,6 @@
         args = [];
         for (const entry of Array.from(container.children)) {
             const input = Array.from(entry.children).find(elem => elem.tagName == "INPUT");
-            console.log(input);
-            console.log(entry);
             args.push(input.value);
         }
         return args.join(";");
