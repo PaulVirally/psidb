@@ -17,5 +17,23 @@
     <a href="/index.html">
         <p>Back Home</p>
     </a>
+    <div id="ids-container">
+        <h2>Transform IDs</h2>
+        <div id="ids"></div>
+        <button id="add-id-btn">Add ID</button>
+    </div>
+    <div id="md-container">
+        <h2>Metadata</h2>
+        <form id="md-form"></form>
+        <button id="add-md-entry-btn">New Entry</button>
+    </div>
+    <button id="chain-transform-btn">Chain Transforms</button>
+    <script type="text/javascript" src="/is_db_loaded.js"></script>
+    <script type="text/javascript" src="/add_data/add_md.js"></script>
+    <script type="text/javascript" src="/add_data/get_md.js"></script>
+    <script type="text/javascript" src="/add_data/add_ids.js"></script>
+    <script type="text/javascript" src="/add_data/get_ids.js"></script>
+    <script type="text/javascript">add_id("add-id-btn");</script>
+    <script type="text/javascript" src="chain_transforms.js"></script>
 </body>
 </html>

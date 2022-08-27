@@ -109,6 +109,20 @@ fn link(state: AppState, data_ids: Vec<u64>, meta_data_str: &str) -> bool {
     db.write().is_ok()
 }
 
+#[tauri::command]
+fn chain(state: AppState, transform_ids: Vec<u64>, meta_data_str: &str) -> bool {
+    let mut data = state.lock().unwrap();
+
+    if data.db.is_none() {
+        return false;
+    }
+    let db = data.db.as_mut().unwrap();
+    if db.chain(&transform_ids, Some(meta_data_str)).is_err() {
+        return false;
+    }
+    db.write().is_ok()
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db_path = Database::get_psidb_dir(None).into_os_string().into_string().unwrap();
     let db = if let Ok(db) = Database::load(None) {
@@ -131,7 +145,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             init_db,
             add_data,
             add_transform,
-            link
+            link,
+            chain
         ])
         .run(tauri::generate_context!())?;
     Ok(())
