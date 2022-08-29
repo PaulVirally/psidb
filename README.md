@@ -19,6 +19,7 @@
       * [ ] Apply transform
       * [x] Chain transforms
       * [x] Link datasets
+      * [ ] Connect entries
       * [ ] Add templates for metadata formatting
    - [ ] Aesthetics
 * [ ] Data integrity
