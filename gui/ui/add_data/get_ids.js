@@ -22,7 +22,7 @@ async function get_ids(elem_id, error_on_empty=true, error_msg="Error: No IDs sp
             const message = window.__TAURI__.dialog.message;
             await message(error_msg, {type: "error"});
             ids_ok = false;
-        } else {
+        } else if (error_msg !== "") {
             const confirm = window.__TAURI__.dialog.confirm;
             ids_ok = await confirm(error_msg, {type: "warning"});
         }

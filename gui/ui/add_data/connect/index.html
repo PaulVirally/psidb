@@ -17,5 +17,51 @@
     <a href="/index.html">
         <p>Back Home</p>
     </a>
+    <div id="action-container">
+        <h2>Action</h2>
+        <select id="action">
+            <option value="Apply">Apply</option>
+            <option value="Chain">Chain</option>
+            <option value="Link">Link</option>
+        </select>
+    </div>
+    <div id="in-data-ids-container">
+        <h2>Input Data IDs</h2>
+        <div id="in-data-ids"></div>
+        <button id="add-in-data-id-btn">Add ID</button>
+    </div>
+    <div id="out-data-ids-container">
+        <h2>Output Data IDs</h2>
+        <div id="out-data-ids"></div>
+        <button id="add-out-data-id-btn">Add ID</button>
+    </div>
+    <div id="in-data-ids-container">
+        <h2>Input Transform IDs</h2>
+        <div id="in-transform-ids"></div>
+        <button id="add-in-transform-id-btn">Add ID</button>
+    </div>
+    <div id="out-transform-ids-container">
+        <h2>Output Transform IDs</h2>
+        <div id="out-transform-ids"></div>
+        <button id="add-out-transform-id-btn">Add ID</button>
+    </div>
+    <div id="md-container">
+        <h2>Metadata</h2>
+        <form id="md-form"></form>
+        <button id="add-md-entry-btn">New Entry</button>
+    </div>
+    <button id="connect-btn">Connect</button>
+    <script type="text/javascript" src="/is_db_loaded.js"></script>
+    <script type="text/javascript" src="/add_data/add_md.js"></script>
+    <script type="text/javascript" src="/add_data/get_md.js"></script>
+    <script type="text/javascript" src="/add_data/add_ids.js"></script>
+    <script type="text/javascript" src="/add_data/get_ids.js"></script>
+    <script type="text/javascript">
+        add_id("add-in-data-id-btn", "in-data-ids");
+        add_id("add-out-data-id-btn", "out-data-ids");
+        add_id("add-in-transform-id-btn", "in-transform-ids");
+        add_id("add-out-transform-id-btn", "out-transform-ids");
+    </script>
+    <script type="text/javascript" src="connect.js"></script>
 </body>
 </html>

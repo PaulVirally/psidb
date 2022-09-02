@@ -137,6 +137,54 @@ fn apply(state: AppState, transform_id: u64, data_ids: Vec<u64>, meta_data_str: 
     db.write().is_ok()
 }
 
+#[tauri::command]
+fn connect(state: AppState, action: &str, in_data_ids: Vec<u64>, out_data_ids: Vec<u64>, in_transform_ids: Vec<u64>, out_transform_ids: Vec<u64>, meta_data_str: &str) -> bool {
+    let mut data = state.lock().unwrap();
+
+    if data.db.is_none() {
+        return false;
+    }
+    let db = data.db.as_mut().unwrap();
+
+    let action = match action {
+        "Apply" => Some(psidb_lib::database::entry::action::Action::Apply),
+        "Chain" => Some(psidb_lib::database::entry::action::Action::Chain),
+        "Link" => Some(psidb_lib::database::entry::action::Action::Link),
+        _ => None
+    };
+    if action.is_none() {
+        return false;
+    }
+    let action = action.unwrap();
+
+    // Convert the input data to Options (None is the vector is empty, Some(vec) otherwise)
+    let in_data_ids = if in_data_ids.is_empty() {
+        None
+    } else {
+        Some(in_data_ids.as_slice())
+    };
+    let out_data_ids = if out_data_ids.is_empty() {
+        None
+    } else {
+        Some(out_data_ids.as_slice())
+    };
+    let in_transform_ids = if in_transform_ids.is_empty() {
+        None
+    } else {
+        Some(in_transform_ids.as_slice())
+    };
+    let out_transform_ids = if out_transform_ids.is_empty() {
+        None
+    } else {
+        Some(out_transform_ids.as_slice())
+    };
+
+    if db.connect(action, in_data_ids, out_data_ids, in_transform_ids, out_transform_ids, Some(meta_data_str)).is_err() {
+        return false;
+    }
+    db.write().is_ok()
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db_path = Database::get_psidb_dir(None).into_os_string().into_string().unwrap();
     let db = if let Ok(db) = Database::load(None) {
@@ -161,7 +209,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             add_transform,
             link,
             chain,
-            apply
+            apply,
+            connect
         ])
         .run(tauri::generate_context!())?;
     Ok(())

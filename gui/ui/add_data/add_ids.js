@@ -2,7 +2,7 @@ let add_id = function (btn_id, div_id) {
     let id_idx = 0;
 
     function remove_id(idx) {
-        const container = document.getElementById("ids");
+        const container = document.getElementById(div_id);
         const elem = Array.from(container.children).find(elem => elem.getAttribute("idx") == idx.toString());
         elem.remove();
     }
