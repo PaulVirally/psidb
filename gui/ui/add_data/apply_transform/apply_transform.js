@@ -1,5 +1,5 @@
 (function () { // Wrap everything in a closure
-    async function try_chain_transforms() {
+    async function try_apply_transform() {
         if (!await is_db_loaded()) {
             return;
         }
@@ -23,5 +23,5 @@
     }
 
     const btn = document.getElementById("apply-transform-btn");
-    btn.addEventListener("click", try_chain_transforms);
+    btn.addEventListener("click", try_apply_transform);
 })();
