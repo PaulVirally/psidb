@@ -4,9 +4,9 @@
             return;
         }
 
-        const [transform_ids, data_ids_ok] = await get_ids("ids");
+        const [transform_ids, transform_ids_ok] = await get_ids("ids");
         const [md, md_ok] = await get_md();
-        const ok = data_ids_ok && md_ok;
+        const ok = transform_ids_ok && md_ok;
         if (!ok) {
             return;
         }
