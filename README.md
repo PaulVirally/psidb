@@ -16,7 +16,7 @@
       * [x] Init database
       * [x] Add data
       * [x] Add transforms
-      * [ ] Apply transform
+      * [x] Apply transform
       * [x] Chain transforms
       * [x] Link datasets
       * [ ] Connect entries
