@@ -25,3 +25,4 @@
 * [ ] Data integrity
     - [ ] Make a backup of the database before writing the new database
     - [ ] Maybe use SQL-style commits/transactions?
+* [ ] Python Bindings (PyO3?)
