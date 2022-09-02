@@ -1,4 +1,4 @@
-let add_id = function (btn_id) {
+let add_id = function (btn_id, div_id) {
     let id_idx = 0;
 
     function remove_id(idx) {
@@ -24,12 +24,12 @@ let add_id = function (btn_id) {
         return container;
     }
 
-    function add_ids() {
-        const container = document.getElementById("ids");
+    function add_ids(div_id) {
+        const container = document.getElementById(div_id);
         const entry = create_id_entry(id_idx++);
         container.appendChild(entry);
     }
 
     const add_id_btn = document.getElementById(btn_id);
-    add_id_btn.addEventListener("click", add_ids);
+    add_id_btn.addEventListener("click", () => add_ids(div_id));
 }
