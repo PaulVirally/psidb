@@ -1,10 +1,113 @@
+:root {
+    /* Nord theme */
+    --nord0: #2e3440;
+    --nord1: #3b4252;
+    --nord2: #434c53;
+    --nord3: #4c566a;
+    --nord4: #d8dee9;
+    --nord5: #e5e9f0;
+    --nord6: #eceff4;
+    --nord7: #8fbcbb;
+    --nord8: #88c0d0;
+    --nord9: #81a1c1;
+    --nord10: #5e81ac;
+    --nord11: #bf616a;
+    --nord12: #d08770;
+    --nord13: #ebcb8b;
+    --nord14: #a3be8c;
+    --nord15: #b48ead;
+
+    /* Colour definitions from theme */
+    --bg-color: var(--nord0);
+    --elevated-bg-color: var(--nord1);
+    --highlighted-element-bg-color: var(--nord3);
+    --text-color: var(--nord4);
+    --highlighted-text-color: var(--nord5);
+    --accent-color: var(--nord8);
+    --secondary-accent-color: var(--nord7);
+    --primary-ui-color: var(--nord8);
+    --secondary-ui-color: var(--nord9);
+    --tertiar-ui-color: var(--nord10);
+    --error-color: var(--nord11);
+    --fatal-error-color: var(--nord12);
+    --warning-color: var(--nord13);
+    --success-color: var(--nord14);
+    --uncommon-functionality-color: var(--nord15);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+[class*="col-"] {
+    float: left;
+    /* border: 1px solid var(--fatal-error-color); */
+    width: 100%;
+}
+
+.row::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+@media only screen and (min-width: 768px) {
+    .col-1 {width: calc(1 * 100%/12);}
+    .col-2 {width: calc(2 * 100%/12);}
+    .col-3 {width: calc(3 * 100%/12);}
+    .col-4 {width: calc(4 * 100%/12);}
+    .col-5 {width: calc(5 * 100%/12);}
+    .col-6 {width: calc(6 * 100%/12);}
+    .col-7 {width: calc(7 * 100%/12);}
+    .col-8 {width: calc(8 * 100%/12);}
+    .col-9 {width: calc(9 * 100%/12);}
+    .col-10 {width: calc(10 * 100%/12);}
+    .col-11 {width: calc(11 * 100%/12);}
+    .col-12 {width: calc(12 * 100%/12);}
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: Roboto, system-ui, sans-serif;
+}
+
 #top-bar {
     height: 10%;
     width: 100%;
 }
 
+.index-btn {
+    background-color: var(--elevated-bg-color);
+    margin: 1%;
+    padding: 10px;
+    border-radius: 9px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+}
+
+.index-btn:hover {
+    background-color: var(--highlighted-element-bg-color);
+    color: var(--highlighted-text-color);
+}
+
+a {
+    color: inherit; /* Make sure we don't get the ugly blue link colour */
+    text-decoration: none; /* Make sure we don't get the ugly underline for links */
+}
+
+h1 {
+    text-align: center;
+    margin: 0;
+}
+
+h2 {
+    text-align: center;
+    margin: 0;
+}
+
 #settings-btn {
-    width: 10%;
+    max-width: 5%;
+    height: auto;
     float: right;
     transition: transform 0.7s ease-in-out;
 }
