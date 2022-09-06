@@ -27,12 +27,15 @@
     --secondary-accent-color: var(--nord7);
     --primary-ui-color: var(--nord8);
     --secondary-ui-color: var(--nord9);
-    --tertiar-ui-color: var(--nord10);
+    --tertiary-ui-color: var(--nord10);
     --error-color: var(--nord11);
     --fatal-error-color: var(--nord12);
     --warning-color: var(--nord13);
     --success-color: var(--nord14);
     --uncommon-functionality-color: var(--nord15);
+
+    /* Geometry styles */
+    --border-radius: 9px;
 }
 
 * {
@@ -41,7 +44,6 @@
 
 [class*="col-"] {
     float: left;
-    /* border: 1px solid var(--fatal-error-color); */
     width: 100%;
 }
 
@@ -52,42 +54,43 @@
 }
 
 @media only screen and (min-width: 768px) {
-    .col-1 {width: calc(1 * 100%/12);}
-    .col-2 {width: calc(2 * 100%/12);}
-    .col-3 {width: calc(3 * 100%/12);}
-    .col-4 {width: calc(4 * 100%/12);}
-    .col-5 {width: calc(5 * 100%/12);}
-    .col-6 {width: calc(6 * 100%/12);}
-    .col-7 {width: calc(7 * 100%/12);}
-    .col-8 {width: calc(8 * 100%/12);}
-    .col-9 {width: calc(9 * 100%/12);}
-    .col-10 {width: calc(10 * 100%/12);}
-    .col-11 {width: calc(11 * 100%/12);}
-    .col-12 {width: calc(12 * 100%/12);}
+    .col-1 {width: calc(1/12 * 100%);}
+    .col-2 {width: calc(2/12 * 100%);}
+    .col-3 {width: calc(3/12 * 100%);}
+    .col-4 {width: calc(4/12 * 100%);}
+    .col-5 {width: calc(5/12 * 100%);}
+    .col-6 {width: calc(6/12 * 100%);}
+    .col-7 {width: calc(7/12 * 100%);}
+    .col-8 {width: calc(8/12 * 100%);}
+    .col-9 {width: calc(9/12 * 100%);}
+    .col-10 {width: calc(10/12 * 100%);}
+    .col-11 {width: calc(11/12 * 100%);}
+    .col-12 {width: calc(12/12 * 100%);}
 }
 
 body {
+    min-height: 100vh;
+    margin: 8px;
     background-color: var(--bg-color);
     color: var(--text-color);
     font-family: Roboto, system-ui, sans-serif;
 }
 
-#top-bar {
-    height: 10%;
-    width: 100%;
+.raised-btn {
+    border-radius: var(--border-radius);
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    cursor: pointer;
 }
 
-.index-btn {
+.ui-btn {
     background-color: var(--elevated-bg-color);
     margin: 1%;
-    padding: 10px;
-    border-radius: 9px;
-    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    padding: calc(max(1%, 10px));
+    text-align: center;
 }
 
-.index-btn:hover {
+.ui-btn:hover {
     background-color: var(--highlighted-element-bg-color);
-    color: var(--highlighted-text-color);
 }
 
 a {
@@ -105,13 +108,41 @@ h2 {
     margin: 0;
 }
 
+p {
+    margin: 0;
+}
+
+#top-bar {
+    height: 10vh;
+    width: 100%;
+}
+
 #settings-btn {
-    max-width: 5%;
-    height: auto;
+    height: 100%;
+    max-width: 100%;
     float: right;
-    transition: transform 0.7s ease-in-out;
+    display: block;
+    transition: transform 0.3s ease-in-out;
 }
 
 #settings-btn:hover {
-    transform: rotate(360deg);
+    /* transform: rotate(360deg); */
+    transform: rotate(90deg);
+}
+
+#back-btn {
+    float: left;
+    display: block;
+    background-color: var(--tertiary-ui-color);
+    border-radius: var(--border-radius);
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    padding: 7px 10px 7px 10px;
+    /* TODO: How do I center this guy vertically :( */
+}
+
+#back-btn:hover {
+    background-color: var(--secondary-ui-color);
+    color: var(--highlighted-text-color);
 }
